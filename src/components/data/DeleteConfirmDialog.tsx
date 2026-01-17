@@ -24,18 +24,18 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className="animate-scale-in">
+      <AlertDialogContent className="animate-scale-in max-w-[90vw] sm:max-w-lg">
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Record</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription className="break-words">
             Are you sure you want to delete "{itemName}"? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
+          <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            className="w-full sm:w-auto bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             Delete
           </AlertDialogAction>

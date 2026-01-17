@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2, Filter } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Filter, Eye, ChevronRight } from 'lucide-react';
 import { DataRecord } from '@/types/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select';
 import { DataFormDialog } from './DataFormDialog';
 import { DeleteConfirmDialog } from './DeleteConfirmDialog';
+import { DataDetailDialog } from './DataDetailDialog';
 import { cn } from '@/lib/utils';
 
 interface DataTableProps {
@@ -37,6 +38,7 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
   const [formOpen, setFormOpen] = useState(false);
   const [editRecord, setEditRecord] = useState<DataRecord | null>(null);
   const [deleteRecord, setDeleteRecord] = useState<DataRecord | null>(null);
+  const [viewRecord, setViewRecord] = useState<DataRecord | null>(null);
 
   const categories = [...new Set(records.map(r => r.category))];
 
@@ -64,29 +66,33 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
     setEditRecord(null);
   };
 
+  const handleRowClick = (record: DataRecord) => {
+    setViewRecord(record);
+  };
+
   return (
     <div className="p-3 sm:p-6 space-y-4 sm:space-y-6">
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:gap-4">
         <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between">
-          <div className="relative flex-1">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Search records..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10"
+              className="pl-10 w-full"
             />
           </div>
-          <Button onClick={() => { setEditRecord(null); setFormOpen(true); }} className="w-full sm:w-auto">
+          <Button onClick={() => { setEditRecord(null); setFormOpen(true); }} className="w-full sm:w-auto shrink-0">
             <Plus className="w-4 h-4 mr-2" />
             Add Record
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2 sm:gap-3">
+        <div className="flex flex-col xs:flex-row gap-2 sm:gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-36">
-              <Filter className="w-4 h-4 mr-2" />
+            <SelectTrigger className="w-full xs:w-[140px] sm:w-36">
+              <Filter className="w-4 h-4 mr-2 shrink-0" />
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -97,7 +103,7 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
             </SelectContent>
           </Select>
           <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-full sm:w-36">
+            <SelectTrigger className="w-full xs:w-[140px] sm:w-36">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
@@ -110,16 +116,69 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-card rounded-xl border border-border overflow-hidden animate-fade-in">
+      {/* Mobile Card View */}
+      <div className="block md:hidden space-y-3">
+        {filteredRecords.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground bg-card rounded-xl border border-border">
+            No records found
+          </div>
+        ) : (
+          filteredRecords.map((record) => (
+            <div
+              key={record.id}
+              onClick={() => handleRowClick(record)}
+              className="bg-card rounded-xl border border-border p-4 space-y-3 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all active:scale-[0.98]"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-medium text-sm line-clamp-1">{record.name}</h3>
+                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                    {record.description}
+                  </p>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground shrink-0" />
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    'text-xs',
+                    record.status === 'active' && 'bg-success/10 text-success',
+                    record.status === 'pending' && 'bg-warning/10 text-warning',
+                    record.status === 'archived' && 'bg-muted text-muted-foreground'
+                  )}
+                >
+                  {record.status}
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {record.category}
+                </Badge>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {new Date(record.date).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {record.value > 0 && (
+                <div className="text-sm font-medium text-primary">
+                  ${record.value.toLocaleString()}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-card rounded-xl border border-border overflow-hidden animate-fade-in">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
                 <TableHead className="font-semibold min-w-[200px]">Name</TableHead>
-                <TableHead className="font-semibold hidden sm:table-cell">Category</TableHead>
+                <TableHead className="font-semibold">Category</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold hidden md:table-cell">Date</TableHead>
+                <TableHead className="font-semibold hidden lg:table-cell">Date</TableHead>
                 <TableHead className="font-semibold text-right hidden lg:table-cell">Value</TableHead>
                 <TableHead className="font-semibold text-right">Actions</TableHead>
               </TableRow>
@@ -133,26 +192,26 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
                 </TableRow>
               ) : (
                 filteredRecords.map((record) => (
-                  <TableRow key={record.id} className="table-row-hover">
+                  <TableRow 
+                    key={record.id} 
+                    className="table-row-hover cursor-pointer"
+                    onClick={() => handleRowClick(record)}
+                  >
                     <TableCell>
-                      <div>
-                        <p className="font-medium text-sm sm:text-base">{record.name}</p>
-                        <p className="text-xs sm:text-sm text-muted-foreground truncate max-w-[150px] sm:max-w-xs">
+                      <div className="min-w-0">
+                        <p className="font-medium">{record.name}</p>
+                        <p className="text-sm text-muted-foreground truncate max-w-xs">
                           {record.description}
                         </p>
-                        <div className="sm:hidden mt-1 flex flex-wrap gap-1">
-                          <Badge variant="secondary" className="text-xs">{record.category}</Badge>
-                        </div>
                       </div>
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
+                    <TableCell>
                       <Badge variant="secondary">{record.category}</Badge>
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
                         className={cn(
-                          'text-xs sm:text-sm',
                           record.status === 'active' && 'bg-success/10 text-success',
                           record.status === 'pending' && 'bg-warning/10 text-warning',
                           record.status === 'archived' && 'bg-muted text-muted-foreground'
@@ -161,29 +220,40 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
                         {record.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-muted-foreground hidden md:table-cell">
+                    <TableCell className="text-muted-foreground hidden lg:table-cell">
                       {new Date(record.date).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right font-medium hidden lg:table-cell">
                       {record.value > 0 ? `$${record.value.toLocaleString()}` : '-'}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRowClick(record)}
+                          className="hover:text-primary h-9 w-9"
+                          title="View details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEdit(record)}
-                          className="hover:text-primary h-8 w-8 sm:h-9 sm:w-9"
+                          className="hover:text-primary h-9 w-9"
+                          title="Edit record"
                         >
-                          <Pencil className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          <Pencil className="w-4 h-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => setDeleteRecord(record)}
-                          className="hover:text-destructive h-8 w-8 sm:h-9 sm:w-9"
+                          className="hover:text-destructive h-9 w-9"
+                          title="Delete record"
                         >
-                          <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </TableCell>
@@ -196,7 +266,7 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
       </div>
 
       {/* Record count */}
-      <div className="text-sm text-muted-foreground">
+      <div className="text-xs sm:text-sm text-muted-foreground">
         Showing {filteredRecords.length} of {records.length} records
       </div>
 
@@ -218,6 +288,13 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
           }
         }}
         itemName={deleteRecord?.name || ''}
+      />
+      <DataDetailDialog
+        open={!!viewRecord}
+        onOpenChange={(open) => !open && setViewRecord(null)}
+        record={viewRecord}
+        onEdit={handleEdit}
+        onDelete={(record) => setDeleteRecord(record)}
       />
     </div>
   );
