@@ -14,21 +14,22 @@ export function RecentActivity({ records, title }: RecentActivityProps) {
 
   return (
     <div className="stat-card">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
-      <div className="space-y-3">
+      <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{title}</h3>
+      <div className="space-y-2 sm:space-y-3">
         {recentRecords.map((record) => (
           <div
             key={record.id}
-            className="flex items-center justify-between p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
+            className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors gap-2"
           >
             <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{record.name}</p>
+              <p className="font-medium text-xs sm:text-sm truncate">{record.name}</p>
               <p className="text-xs text-muted-foreground">{record.category}</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <Badge
                 variant="secondary"
                 className={cn(
+                  'text-xs',
                   record.status === 'active' && 'bg-success/10 text-success hover:bg-success/20',
                   record.status === 'pending' && 'bg-warning/10 text-warning hover:bg-warning/20',
                   record.status === 'archived' && 'bg-muted text-muted-foreground'
@@ -36,7 +37,7 @@ export function RecentActivity({ records, title }: RecentActivityProps) {
               >
                 {record.status}
               </Badge>
-              <span className="text-xs text-muted-foreground whitespace-nowrap">
+              <span className="text-xs text-muted-foreground whitespace-nowrap hidden sm:inline">
                 {new Date(record.date).toLocaleDateString()}
               </span>
             </div>

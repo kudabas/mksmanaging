@@ -8,6 +8,7 @@ import { DocumentsView } from '@/components/documents/DocumentsView';
 import { PlaceholderView } from '@/components/placeholders/PlaceholderView';
 import { DataRecord } from '@/types/data';
 import { initialRecords, initialDocuments } from '@/data/mockData';
+import { SidebarProvider } from '@/hooks/use-sidebar';
 
 const viewTitles: Record<string, { title: string; subtitle: string }> = {
   dashboard: { title: 'Dashboard', subtitle: 'Overview of your data' },
@@ -77,13 +78,17 @@ const Index = () => {
   const { title, subtitle } = viewTitles[activeView] || viewTitles.dashboard;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar activeView={activeView} onViewChange={setActiveView} />
-      <main className="ml-64">
-        <Header title={title} subtitle={subtitle} />
-        {renderView()}
-      </main>
-    </div>
+    <SidebarProvider>
+      <div className="min-h-screen bg-background">
+        <Sidebar activeView={activeView} onViewChange={setActiveView} />
+        <main className="lg:ml-64 min-h-screen flex flex-col">
+          <Header title={title} subtitle={subtitle} />
+          <div className="flex-1 overflow-auto">
+            {renderView()}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 
