@@ -6,6 +6,10 @@ export interface DataRecord {
   date: string;
   value: number;
   description: string;
+  fileName?: string;
+  fileUrl?: string;
+  fileType?: 'pdf' | 'word' | 'excel';
+  fileSize?: string;
 }
 
 export interface DocumentRecord {

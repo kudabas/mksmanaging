@@ -18,6 +18,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { FileUpload, getFileType } from './FileUpload';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface DataFormDialogProps {
   open: boolean;
@@ -41,7 +44,13 @@ export function DataFormDialog({
     date: new Date().toISOString().split('T')[0],
     value: 0,
     description: '',
+    fileName: '',
+    fileUrl: '',
+    fileType: undefined as DataRecord['fileType'],
+    fileSize: '',
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -52,7 +61,12 @@ export function DataFormDialog({
         date: initialData.date,
         value: initialData.value,
         description: initialData.description,
+        fileName: initialData.fileName || '',
+        fileUrl: initialData.fileUrl || '',
+        fileType: initialData.fileType,
+        fileSize: initialData.fileSize || '',
       });
+      setSelectedFile(null);
     } else {
       setFormData({
         name: '',
@@ -61,13 +75,73 @@ export function DataFormDialog({
         date: new Date().toISOString().split('T')[0],
         value: 0,
         description: '',
+        fileName: '',
+        fileUrl: '',
+        fileType: undefined,
+        fileSize: '',
       });
+      setSelectedFile(null);
     }
   }, [initialData, categories, open]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    let fileData = {
+      fileName: formData.fileName,
+      fileUrl: formData.fileUrl,
+      fileType: formData.fileType,
+      fileSize: formData.fileSize,
+    };
+
+    if (selectedFile) {
+      setIsUploading(true);
+      try {
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('record-files')
+          .upload(fileName, selectedFile);
+
+        if (uploadError) throw uploadError;
+
+        const { data: urlData } = supabase.storage
+          .from('record-files')
+          .getPublicUrl(fileName);
+
+        fileData = {
+          fileName: selectedFile.name,
+          fileUrl: urlData.publicUrl,
+          fileType: getFileType(selectedFile.type),
+          fileSize: formatFileSize(selectedFile.size),
+        };
+
+        toast.success('File uploaded successfully');
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.error('Failed to upload file');
+        setIsUploading(false);
+        return;
+      }
+      setIsUploading(false);
+    }
+
+    onSubmit({
+      name: formData.name,
+      category: formData.category,
+      status: formData.status,
+      date: formData.date,
+      value: formData.value,
+      description: formData.description,
+      ...fileData,
+    });
   };
 
   return (
@@ -163,12 +237,20 @@ export function DataFormDialog({
             />
           </div>
 
+          <div className="space-y-2">
+            <Label>Attach File (Optional)</Label>
+            <FileUpload
+              onFileSelect={setSelectedFile}
+              currentFile={formData.fileName ? { name: formData.fileName, type: formData.fileType || '' } : null}
+            />
+          </div>
+
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto" disabled={isUploading}>
               Cancel
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
-              {initialData ? 'Save Changes' : 'Add Record'}
+            <Button type="submit" className="w-full sm:w-auto" disabled={isUploading}>
+              {isUploading ? 'Uploading...' : initialData ? 'Save Changes' : 'Add Record'}
             </Button>
           </DialogFooter>
         </form>

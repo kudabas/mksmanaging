@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Pencil, Trash2, Filter, Eye, ChevronRight } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Filter, Eye, ChevronRight, Paperclip } from 'lucide-react';
 import { DataRecord } from '@/types/data';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -159,11 +159,19 @@ export function DataTable({ records, onAdd, onEdit, onDelete }: DataTableProps) 
                 </span>
               </div>
               
-              {record.value > 0 && (
-                <div className="text-sm font-medium text-primary">
-                  ${record.value.toLocaleString()}
-                </div>
-              )}
+              <div className="flex items-center gap-2">
+                {record.value > 0 && (
+                  <span className="text-sm font-medium text-primary">
+                    ${record.value.toLocaleString()}
+                  </span>
+                )}
+                {record.fileUrl && (
+                  <Badge variant="outline" className="text-xs gap-1">
+                    <Paperclip className="w-3 h-3" />
+                    File
+                  </Badge>
+                )}
+              </div>
             </div>
           ))
         )}

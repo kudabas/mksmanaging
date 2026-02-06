@@ -1,7 +1,7 @@
 import { DataRecord } from '@/types/data';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Pencil, Trash2, Calendar, DollarSign, Tag, FileText } from 'lucide-react';
+import { Pencil, Trash2, Calendar, DollarSign, Tag, FileText, Paperclip } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
+import { FilePreview } from './FilePreview';
 
 interface DataDetailDialogProps {
   open: boolean;
@@ -99,6 +100,22 @@ export function DataDetailDialog({
               {record.description || 'No description provided.'}
             </p>
           </div>
+
+          {/* File Attachment */}
+          {record.fileUrl && record.fileName && record.fileType && (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Paperclip className="w-4 h-4 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">Attached File</p>
+              </div>
+              <FilePreview
+                fileName={record.fileName}
+                fileUrl={record.fileUrl}
+                fileType={record.fileType}
+                fileSize={record.fileSize}
+              />
+            </div>
+          )}
         </div>
 
         {/* Actions */}
